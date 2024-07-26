@@ -118,8 +118,12 @@ object SizeEstimator extends Logging {
       }
     }
     pointerSize = if (is64bit && !isCompressedOops) 8 else 4
+    logDebug(s"arch: ${arch} is64bit: ${is64bit}")
+    logDebug(s"isCompressedOops: ${isCompressedOops} pointerSize: ${pointerSize}")
     classInfos.clear()
-    classInfos.put(classOf[Object], new ClassInfo(objectSize, Nil))
+    val cls = classOf[Object]
+    logDebug(s"${cls} self: ${objectSize} total: ${objectSize}")
+    classInfos.put(cls, new ClassInfo(objectSize, Nil))
   }
 
   private def getIsCompressedOops: Boolean = {
@@ -323,6 +327,7 @@ object SizeEstimator extends Logging {
 
     val parent = getClassInfo(cls.getSuperclass)
     var shellSize = parent.shellSize
+    val parentShellSize = shellSize
     var pointerFields = parent.pointerFields
     val sizeCount = Array.ofDim[Int](fieldSizes.max + 1)
 
@@ -380,6 +385,8 @@ object SizeEstimator extends Logging {
     // Should choose a larger size to be new shellSize and clearly alignedSize >= shellSize, and
     // round up the instance filed blocks
     shellSize = alignSizeUp(alignedSize, pointerSize)
+
+    logDebug(s"${cls} self: ${shellSize - parentShellSize} total: ${shellSize}")
 
     // Create and cache a new ClassInfo
     val newInfo = new ClassInfo(shellSize, pointerFields)
